@@ -20,8 +20,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Download official gradlew
+        run: |
+          curl -sSL https://raw.githubusercontent.com/gradle/gradle/v8.8.0/gradlew -o gradlew
+          chmod +x gradlew
 
       - name: Build with Gradle
         run: ./gradlew build
