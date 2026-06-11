@@ -20,13 +20,13 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Download official gradlew
-        run: |
-          curl -sSL https://raw.githubusercontent.com/gradle/gradle/v8.8.0/gradlew -o gradlew
-          chmod +x gradlew
+      - name: Setup Gradle 8.8
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.8'
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: gradle build
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
