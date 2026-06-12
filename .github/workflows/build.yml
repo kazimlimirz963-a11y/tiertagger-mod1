@@ -31,9 +31,12 @@ jobs:
       - name: Build
         run: ./gradlew build --no-daemon
 
-      - name: Upload JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: tiertagger-mod
-          path: build/libs/*.jar
-          if-no-files-found: error
+     - name: Upload JAR artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: tiertagger-mod
+    path: |
+      build/libs/*.jar
+      !build/libs/*-dev.jar
+      !build/libs/*-sources.jar
+    if-no-files-found: error
