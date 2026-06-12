@@ -20,34 +20,12 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Sync versions from official Fabric example mod (1.21.1)
+      - name: Download Gradle wrapper
         run: |
-          BASE="https://raw.githubusercontent.com/FabricMC/fabric-example-mod/1.21.1"
-
-          # Get exact working versions from official Fabric example mod
-          curl -sSL "$BASE/gradle.properties" > /tmp/fabric_ref.properties
-          echo "=== Official versions ==="
-          cat /tmp/fabric_ref.properties
-
-          FABRIC_VERSION=$(grep "^fabric_version=" /tmp/fabric_ref.properties | cut -d= -f2)
-          LOADER_VERSION=$(grep "^loader_version=" /tmp/fabric_ref.properties | cut -d= -f2)
-          YARN=$(grep "^yarn_mappings=" /tmp/fabric_ref.properties | cut -d= -f2)
-
-          sed -i "s/fabric_version=.*/fabric_version=$FABRIC_VERSION/" gradle.properties
-          sed -i "s/loader_version=.*/loader_version=$LOADER_VERSION/" gradle.properties
-          sed -i "s/yarn_mappings=.*/yarn_mappings=$YARN/" gradle.properties
-
-          LOOM_VER=$(curl -sSL "$BASE/build.gradle" | grep '"fabric-loom"' | grep -oP '(?<=version ")[^"]+')
-          sed -i "s/id \"fabric-loom\" version \"[^\"]*\"/id \"fabric-loom\" version \"$LOOM_VER\"/" build.gradle
-
-          echo "=== Updated gradle.properties ==="
-          cat gradle.properties
-
-          # Download official Gradle wrapper (tested, working)
           mkdir -p gradle/wrapper
-          curl -sSL "$BASE/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
-          curl -sSL "$BASE/gradle/wrapper/gradle-wrapper.properties" -o gradle/wrapper/gradle-wrapper.properties
-          curl -sSL "$BASE/gradlew" -o gradlew
+          curl -sSL "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/1.21.1/gradlew" -o gradlew
+          curl -sSL "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/1.21.1/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
+          curl -sSL "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/1.21.1/gradle/wrapper/gradle-wrapper.properties" -o gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
 
       - name: Build
