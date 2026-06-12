@@ -20,40 +20,40 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Auto-detect correct Fabric API version
+      - name: Sync versions from official Fabric example mod (1.21.1)
         run: |
-          python3 - << 'EOF'
-          import urllib.request
-          import xml.etree.ElementTree as ET
-          import re
+          BASE="https://raw.githubusercontent.com/FabricMC/fabric-example-mod/1.21.1"
 
-          url = "https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml"
-          with urllib.request.urlopen(url) as r:
-              tree = ET.parse(r)
+          # Get exact working versions from official Fabric example mod
+          curl -sSL "$BASE/gradle.properties" > /tmp/fabric_ref.properties
+          echo "=== Official versions ==="
+          cat /tmp/fabric_ref.properties
 
-          versions = [v.text for v in tree.findall('.//version')]
-          mc_versions = [v for v in versions if '+1.21.1' in v]
+          FABRIC_VERSION=$(grep "^fabric_version=" /tmp/fabric_ref.properties | cut -d= -f2)
+          LOADER_VERSION=$(grep "^loader_version=" /tmp/fabric_ref.properties | cut -d= -f2)
+          YARN=$(grep "^yarn_mappings=" /tmp/fabric_ref.properties | cut -d= -f2)
 
-          if mc_versions:
-              latest = mc_versions[-1]
-              print(f"Available: {mc_versions}")
-              print(f"Using: {latest}")
-              content = open('gradle.properties').read()
-              content = re.sub(r'fabric_version=.*', f'fabric_version={latest}', content)
-              open('gradle.properties', 'w').write(content)
-          else:
-              print("No 1.21.1 versions found!")
-          EOF
+          sed -i "s/fabric_version=.*/fabric_version=$FABRIC_VERSION/" gradle.properties
+          sed -i "s/loader_version=.*/loader_version=$LOADER_VERSION/" gradle.properties
+          sed -i "s/yarn_mappings=.*/yarn_mappings=$YARN/" gradle.properties
 
-      - name: Setup Gradle 8.8
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.10'
+          LOOM_VER=$(curl -sSL "$BASE/build.gradle" | grep '"fabric-loom"' | grep -oP '(?<=version ")[^"]+')
+          sed -i "s/id \"fabric-loom\" version \"[^\"]*\"/id \"fabric-loom\" version \"$LOOM_VER\"/" build.gradle
 
-      - name: Build with Gradle
-        run: gradle build
+          echo "=== Updated gradle.properties ==="
+          cat gradle.properties
 
-      - name: Upload JAR artifact
+          # Download official Gradle wrapper (tested, working)
+          mkdir -p gradle/wrapper
+          curl -sSL "$BASE/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
+          curl -sSL "$BASE/gradle/wrapper/gradle-wrapper.properties" -o gradle/wrapper/gradle-wrapper.properties
+          curl -sSL "$BASE/gradlew" -o gradlew
+          chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew build --no-daemon
+
+      - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: tiertagger-mod
